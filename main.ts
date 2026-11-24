@@ -14,9 +14,19 @@ import { join } from "node:path";
 const RANT =
   "I scanned my own groceries, bagged my own groceries, paid for my own groceries — and the machine still froze and shouted UNEXPECTED ITEM like I'd smuggled in a second watermelon. I am not a thief. I am an unpaid cashier with a beeping supervisor.";
 
-// The gate requires 1-400 UTF-8 characters, not only whitespace.
-if (RANT.length < 1 || RANT.length > 400 || RANT.trim().length === 0) {
-  throw new Error(`entry rant must be 1-400 chars, got ${RANT.length}`);
+// The gate requires 1-400 characters, not only whitespace. Report the
+// exact failing bound so a too-long or blank entry is diagnosed at once
+// instead of surfacing as a bare "invalid entry" from the scorer.
+const rantProblem =
+  RANT.length < 1
+    ? "empty"
+    : RANT.length > 400
+      ? `too long (${RANT.length} chars, max 400)`
+      : RANT.trim().length === 0
+        ? "whitespace only"
+        : null;
+if (rantProblem) {
+  throw new Error(`entry rant rejected: ${rantProblem}`);
 }
 
 // Write to the ABSOLUTE /output/entry.txt at the filesystem root,
